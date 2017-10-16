@@ -2,9 +2,10 @@ package simulation.ex06;
 
 import madkit.kernel.AbstractAgent;
 import madkit.kernel.Message;
-import simulation.puzzle.LocationMessage;
+import simulation.puzzle.DistanceDimension;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class SituatedAgent extends AbstractAgent {
@@ -18,6 +19,7 @@ public class SituatedAgent extends AbstractAgent {
     /**
      * agent's position
      */
+    protected Dimension previousLocation = new Dimension(-1,-1);
     protected Dimension location = new Dimension();
     protected Dimension target = new Dimension();
 
@@ -57,39 +59,80 @@ public class SituatedAgent extends AbstractAgent {
             System.out.println(message);
         }
 
+        if (calcDistance(location)==0)
+            return;
+
         Dimension envDim = environment.getDimension();
-        Dimension newLoc = new Dimension(location);
 
-        if(newLoc.width > target.width)
-        {
-            newLoc.width--;
-        }
-        else if(newLoc.width < target.width)
-        {
-            newLoc.width++;
-        }
-        if(newLoc.height > target.height)
-        {
-            newLoc.height--;
-        }
-        else if(newLoc.height < target.height)
-        {
-            newLoc.height++;
-        }
-        newLoc.width %= envDim.width;
-        newLoc.height %= envDim.height;
+        Dimension d1 = new Dimension(location.width,location.height+1);
+        Dimension d2 = new Dimension(location.width+1,location.height);
+        Dimension d3 = new Dimension(location.width,location.height-1);
+        Dimension d4 = new Dimension(location.width-1,location.height);
 
-        AbstractAgent agent = environment.getAgentAt(newLoc, this);
-        if(agent != null)
+        Dimension[] dimensions = {// top, right, bottom, left
+                d1,
+                d2,
+                d3,
+                d4,
+        };
+
+        ArrayList<DistanceDimension> sortedDistanceDimensions = new ArrayList<>();
+
+        for (Dimension dim : dimensions)
         {
-            System.out.println("cant go at "+newLoc);
-            sendMessage(agent.getAgentAddressIn(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE), new LocationMessage(newLoc));
+            int i = 0;
+            boolean done = false;
+            DistanceDimension newDistanceDimension = new DistanceDimension(dim,calcDistance(dim));
+            for (DistanceDimension distanceDimension : sortedDistanceDimensions)
+            {
+                if (isInMap(dim) && distanceDimension.getDistance() > newDistanceDimension.getDistance())
+                {
+                    sortedDistanceDimensions.add(i,newDistanceDimension);
+                    done = true;
+                    break;
+                }
+                i++;
+
+            }
+            if (!done && isInMap(dim))
+                sortedDistanceDimensions.add(newDistanceDimension);
         }
-        else
-        {
-            location.width = newLoc.width;
-            location.height = newLoc.height;
+
+        for (DistanceDimension distanceDimension : sortedDistanceDimensions){
+            Dimension newLoc = distanceDimension.getDimension();
+//            newLoc.width %= envDim.width;
+//            newLoc.height %= envDim.height;
+
+            AbstractAgent agent = environment.getAgentAt(newLoc, this);
+            if(agent != null || (newLoc.width == previousLocation.width && newLoc.height == previousLocation.height))
+            {
+
+                System.out.println("cant go at "+newLoc);
+//            sendMessage(agent.getAgentAddressIn(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE), new LocationMessage(newLoc));
+            }
+            else
+            {
+                previousLocation.width = location.width;
+                previousLocation.height = location.height;
+
+                location.width = newLoc.width;
+                location.height = newLoc.height;
+                return;
+            }
         }
+    }
+
+    private boolean isInMap(Dimension dim) {
+        boolean er = dim.width >=0 && dim.height>= 0 && dim.width<environment.getDimension().width && dim.height<environment.getDimension().height;
+        return er;
+    }
+
+
+    private int calcDistance(Dimension dim) {
+        int diffX = Math.abs(target.width - dim.width);
+        int diffY = Math.abs(target.height - dim.height);
+
+        return diffX + diffY;
     }
 
     public Dimension getLocation() {

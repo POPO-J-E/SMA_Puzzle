@@ -22,25 +22,25 @@ public class MySimulationModel extends AbstractAgent {
 
     @Override
     protected void activate() {
-	// 1 : create the simulation group
-	createGroup(MY_COMMUNITY, SIMU_GROUP);
+        // 1 : create the simulation group
+        createGroup(MY_COMMUNITY, SIMU_GROUP);
 
-	// 2 : create the environment
-	EnvironmentAgent environment = new EnvironmentAgent();
-	launchAgent(environment);
+        // 2 : create the environment
+        EnvironmentAgent environment = new EnvironmentAgent();
+        launchAgent(environment);
 
-	// 4 : launch some simulated agents
-	for (int i = 0; i < 25; i++) {
-	    launchAgent(new SituatedAgent());
-	}
-	
-	// 5 : create the scheduler
-	MyScheduler06 scheduler = new MyScheduler06();
-	launchAgent(scheduler, true);
-	
-	// 3 : create the viewer
-	Viewer viewer = new Viewer();
-	launchAgent(viewer, true);
+        // 4 : launch some simulated agents
+        for (int i = 0; i < 10; i++) {
+            launchAgent(new SituatedAgent());
+        }
+
+        // 5 : create the scheduler
+        MyScheduler06 scheduler = new MyScheduler06();
+        launchAgent(scheduler, true);
+
+        // 3 : create the viewer
+        Viewer viewer = new Viewer();
+        launchAgent(viewer, true);
 	
     }
 

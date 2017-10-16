@@ -32,7 +32,7 @@ public class EnvironmentAgent extends Watcher {
 
     @Override
     protected void activate() {
-	dimension = new Dimension(10, 10);
+	dimension = new Dimension(8, 8);
 	agents = new ArrayList<>();
 	
 	// 1 : request my role so that the viewer can probe me
