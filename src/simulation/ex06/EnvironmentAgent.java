@@ -32,7 +32,7 @@ public class EnvironmentAgent extends Watcher {
 
     @Override
     protected void activate() {
-	dimension = new Dimension(8, 8);
+	dimension = new Dimension(5, 5);
 	agents = new ArrayList<>();
 	
 	// 1 : request my role so that the viewer can probe me
@@ -58,7 +58,7 @@ public class EnvironmentAgent extends Watcher {
 		}
     }
 
-    public AbstractAgent getAgentAt(Dimension location, AbstractAgent agentAsker)
+    public synchronized AbstractAgent getAgentAt(Dimension location, AbstractAgent agentAsker)
 	{
 		for (AbstractAgent agent : agents) {
 			if(agentAsker != agent && agent instanceof SituatedAgent)

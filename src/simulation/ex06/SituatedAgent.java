@@ -3,6 +3,7 @@ package simulation.ex06;
 import madkit.kernel.AbstractAgent;
 import madkit.kernel.Message;
 import simulation.puzzle.DistanceDimension;
+import simulation.puzzle.LocationMessage;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -22,10 +23,17 @@ public class SituatedAgent extends AbstractAgent {
     protected Dimension previousLocation = new Dimension(-1,-1);
     protected Dimension location = new Dimension();
     protected Dimension target = new Dimension();
-
-
-
     protected Color color;
+    protected float ratio;
+    private static Random rand = new Random();
+    private int numero;
+
+    public SituatedAgent(Dimension location, Dimension target, float ratio, int numero) {
+        this.location = location;
+        this.target = target;
+        this.ratio = ratio;
+        this.numero = numero;
+    }
 
     /**
      * initialize my role and fields
@@ -33,13 +41,13 @@ public class SituatedAgent extends AbstractAgent {
     @Override
     protected void activate() {
         requestRole(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE);
-        Dimension envDim = environment.getDimension();
-
-        location.width = (int) (Math.random() * envDim.width);
-        location.height = (int) (Math.random() * envDim.height);
-
-        target.width = (int) (Math.random() * envDim.width);
-        target.height = (int) (Math.random() * envDim.height);
+//        Dimension envDim = environment.getDimension();
+//
+//        location.width = (int) (Math.random() * envDim.width);
+//        location.height = (int) (Math.random() * envDim.height);
+//
+//        target.width = (int) (Math.random() * envDim.width);
+//        target.height = (int) (Math.random() * envDim.height);
 
         Random rand = new Random();
         float r = rand.nextFloat();
@@ -53,13 +61,22 @@ public class SituatedAgent extends AbstractAgent {
      */
     @SuppressWarnings("unused")
     private void doIt() {
-        while (!isMessageBoxEmpty())
+        boolean needToMove = false;
+
+        if (!isMessageBoxEmpty())
         {
             Message message = nextMessage();
             System.out.println(message);
+            if (ratio < rand.nextFloat())
+            {
+                needToMove = true;
+            }
+            else
+            {
+                needToMove = false;
+            }
         }
-
-        if (calcDistance(location)==0)
+        if (calcDistance(location)==0 && !needToMove)
             return;
 
         Dimension envDim = environment.getDimension();
@@ -98,28 +115,36 @@ public class SituatedAgent extends AbstractAgent {
                 sortedDistanceDimensions.add(newDistanceDimension);
         }
 
-        for (DistanceDimension distanceDimension : sortedDistanceDimensions){
-            Dimension newLoc = distanceDimension.getDimension();
-//            newLoc.width %= envDim.width;
-//            newLoc.height %= envDim.height;
+        int size = sortedDistanceDimensions.size();
+        int i = 0;
+        AbstractAgent agentToContact = null;
+        Dimension locToGo = null;
+        for (int j=0; j<sortedDistanceDimensions.size(); j++){
+            Dimension newLoc = sortedDistanceDimensions.get(j).getDimension();
 
             AbstractAgent agent = environment.getAgentAt(newLoc, this);
-            if(agent != null || (newLoc.width == previousLocation.width && newLoc.height == previousLocation.height))
-            {
 
-                System.out.println("cant go at "+newLoc);
-//            sendMessage(agent.getAgentAddressIn(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE), new LocationMessage(newLoc));
-            }
-            else
+            if(agent == null)
             {
-                previousLocation.width = location.width;
-                previousLocation.height = location.height;
+                if((newLoc.width != previousLocation.width && newLoc.height != previousLocation.height) /*|| i == size-1*/)
+                {
+                    previousLocation.width = location.width;
+                    previousLocation.height = location.height;
 
-                location.width = newLoc.width;
-                location.height = newLoc.height;
-                return;
+                    location.width = newLoc.width;
+                    location.height = newLoc.height;
+                    return;
+                }
             }
+            else if (agentToContact == null){
+                agentToContact = agent;
+                locToGo = newLoc;
+            }
+            i++;
         }
+        if (agentToContact != null)
+            sendMessage(agentToContact.getAgentAddressIn(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE), new LocationMessage(locToGo));
+
     }
 
     private boolean isInMap(Dimension dim) {
@@ -145,5 +170,16 @@ public class SituatedAgent extends AbstractAgent {
 
     public Color getColor() {
         return color;
+    }
+
+    public int getNumero() {
+        return numero;
+    }
+
+    @Override
+    public String toString() {
+        return "SituatedAgent{" +
+                "numero=" + numero +
+                '}';
     }
 }
