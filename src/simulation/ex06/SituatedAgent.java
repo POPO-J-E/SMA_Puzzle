@@ -2,11 +2,13 @@ package simulation.ex06;
 
 import madkit.kernel.AbstractAgent;
 import madkit.kernel.Message;
+import simulation.puzzle.AgressionMessage;
 import simulation.puzzle.DistanceDimension;
 import simulation.puzzle.LocationMessage;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class SituatedAgent extends AbstractAgent {
@@ -23,6 +25,10 @@ public class SituatedAgent extends AbstractAgent {
     protected Dimension previousLocation = new Dimension(-1,-1);
     protected Dimension location = new Dimension();
     protected Dimension target = new Dimension();
+
+    protected int[][] whiteGradient;
+    protected int[][] targetGradient;
+
     protected Color color;
     protected float ratio;
     private static Random rand = new Random();
@@ -34,6 +40,8 @@ public class SituatedAgent extends AbstractAgent {
         this.ratio = ratio;
         this.numero = numero;
     }
+
+    private boolean attacked;
 
     /**
      * initialize my role and fields
@@ -54,6 +62,8 @@ public class SituatedAgent extends AbstractAgent {
         float g = rand.nextFloat();
         float b = rand.nextFloat();
         color = new Color(r, g, b);
+
+        attacked = false;
     }
 
     /**
@@ -61,19 +71,18 @@ public class SituatedAgent extends AbstractAgent {
      */
     @SuppressWarnings("unused")
     private void doIt() {
-        boolean needToMove = false;
+        attacked = false;
+        AgressionMessage message = receiveMessages();
 
-        if (!isMessageBoxEmpty())
+        if(message != null)
         {
-            Message message = nextMessage();
-            System.out.println(message);
-            if (ratio < rand.nextFloat())
+            flee(message);
+        }
+        else
+        {
+            if(!isBlocked() && !isSatisfied())
             {
-                needToMove = true;
-            }
-            else
-            {
-                needToMove = false;
+                satisfy();
             }
         }
         if (calcDistance(location)==0 && !needToMove)
@@ -124,7 +133,10 @@ public class SituatedAgent extends AbstractAgent {
 
             AbstractAgent agent = environment.getAgentAt(newLoc, this);
 
-            if(agent == null)
+                System.out.println("cant go at "+newLoc);
+//            sendMessage(agent.getAgentAddressIn(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE), new AgressionMessage(newLoc));
+            }
+            else
             {
                 if((newLoc.width != previousLocation.width && newLoc.height != previousLocation.height) /*|| i == size-1*/)
                 {
@@ -145,6 +157,43 @@ public class SituatedAgent extends AbstractAgent {
         if (agentToContact != null)
             sendMessage(agentToContact.getAgentAddressIn(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE), new LocationMessage(locToGo));
 
+    }
+
+    private void satisfy()
+    {
+        if(canBeSatisfied())
+            doSatisfaction();
+        else
+            satisfactionAgression();
+    }
+
+    private void flee(AgressionMessage message) {
+        if(isBlocked())
+            fleeAgression(message);
+        else if(isAdjacentToGoal() && canBeSatisfied())
+        {
+            if(canBeSatisfied())
+                doSatisfaction();
+            else if(!message.getAgent().hasAttacked())
+                aggress(target, target);
+            else
+                doFlee(message);
+        }
+        else
+        {
+            doFlee(message);
+        }
+    }
+
+    private AgressionMessage receiveMessages() {
+        AgressionMessage locationMessage = null;
+        while (!isMessageBoxEmpty())
+        {
+            Message message = nextMessage();
+            if(locationMessage == null && message instanceof AgressionMessage)
+                locationMessage = (AgressionMessage)message;
+        }
+        return locationMessage;
     }
 
     private boolean isInMap(Dimension dim) {
@@ -171,15 +220,153 @@ public class SituatedAgent extends AbstractAgent {
     public Color getColor() {
         return color;
     }
+    // CONDITIONS
 
-    public int getNumero() {
-        return numero;
+    public boolean isSatisfied()
+    {
+        return location.equals(target);
     }
 
-    @Override
-    public String toString() {
-        return "SituatedAgent{" +
-                "numero=" + numero +
-                '}';
+    public boolean canBeSatisfied()
+    {
+        return isAdjacentToGoal() && patchIsEmpty(target);
+    }
+
+    public boolean isBlocked()
+    {
+        List<Dimension> dimensions = getAdjacentLocations();
+
+        for (Dimension dim : dimensions) {
+            if(patchIsEmpty(dim))
+                return false;
+        }
+        return true;
+    }
+
+    public boolean hasAttacked()
+    {
+        return attacked;
+    }
+
+    public boolean isAdjacentToGoal()
+    {
+        return calcDistance(target) == 1;
+    }
+
+    public boolean patchIsEmpty(Dimension dim)
+    {
+        return environment.getAgentAt(dim, this) == null;
+    }
+
+    public List<Dimension> getAdjacentLocations()
+    {
+        Dimension envDim = environment.getDimension();
+
+        Dimension d1 = new Dimension(location.width,location.height+1);
+        Dimension d2 = new Dimension(location.width+1,location.height);
+        Dimension d3 = new Dimension(location.width,location.height-1);
+        Dimension d4 = new Dimension(location.width-1,location.height);
+
+        Dimension[] dimensions = {// top, right, bottom, left
+                d1,
+                d2,
+                d3,
+                d4,
+        };
+
+        ArrayList<Dimension> sortedDimensions = new ArrayList<>();
+
+        for (Dimension dim : dimensions)
+        {
+            if (isInMap(dim) && patchIsEmpty(dim))
+            {
+                sortedDimensions.add(dim);
+            }
+        }
+
+        return sortedDimensions;
+    }
+
+    // COMPORTEMENTS
+
+    public void doSatisfaction()
+    {
+        moveOn(target);
+    }
+
+    public void satisfactionAgression()
+    {
+        Dimension location = findPlaceForSatisfaction();
+        Dimension constraint = findConstraintForSatisfaction();
+        tryAggressOrMove(location, constraint);
+    }
+
+    public void doFlee(AgressionMessage message)
+    {
+        Dimension location = findPlaceForFleeing();
+        moveOn(location);
+    }
+
+    public void fleeAgression(AgressionMessage message)
+    {
+        Dimension location = findPlaceForFleeAgression();
+        Dimension constraint = location;
+        tryAggressOrMove(location, constraint);
+    }
+
+    private void tryAggressOrMove(Dimension location, Dimension constraint) {
+        if(!aggress(location, constraint))
+            moveOn(location);
+    }
+
+    public boolean aggress(Dimension location, Dimension constraint)
+    {
+        return aggress(environment.getAgentAt(location, this), constraint);
+    }
+
+    public boolean aggress(AbstractAgent agent, Dimension constraint)
+    {
+        if(agent != null)
+        {
+            sendMessage(agent.getAgentAddressIn(MySimulationModel.MY_COMMUNITY, MySimulationModel.SIMU_GROUP, MySimulationModel.AGENT_ROLE), new AgressionMessage(constraint, this));
+            attacked = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    public void moveOn(Dimension dimension)
+    {
+        if(calcDistance(dimension) > 1)
+        {
+            System.out.println("!!! move to not adjacent location");
+        }
+        else if(environment.moveAgentTo(this, dimension))
+        {
+            this.location.setSize(dimension);
+        }
+    }
+
+    // CHOIX DES DEPLACEMENTS
+
+    public Dimension findPlaceForSatisfaction()
+    {
+        return null;
+    }
+
+    public Dimension findPlaceForFleeing()
+    {
+        return null;
+    }
+
+    public Dimension findPlaceForFleeAgression()
+    {
+        return null;
+    }
+
+    public Dimension findConstraintForSatisfaction()
+    {
+        return target;
     }
 }
