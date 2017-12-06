@@ -2,6 +2,11 @@ package simulation.ex06;
 
 import madkit.kernel.AbstractAgent;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 /**
  * 
  * 
@@ -19,6 +24,7 @@ public class MySimulationModel extends AbstractAgent {
     public static final String ENV_ROLE = "environment";
     public static final String SCH_ROLE = "scheduler";
     public static final String VIEWER_ROLE = "viewer";
+    public static final int AGENT_NUMBER = 5;
 
     @Override
     protected void activate() {
@@ -29,9 +35,22 @@ public class MySimulationModel extends AbstractAgent {
         EnvironmentAgent environment = new EnvironmentAgent();
         launchAgent(environment);
 
+        List<Dimension> starts = new ArrayList<>(AGENT_NUMBER);
+        List<Dimension> targets = new ArrayList<>(AGENT_NUMBER);
+
+        fillList(starts,environment.getDimension());
+        fillList(targets,environment.getDimension());
+
+        Random rand = new Random();
+
         // 4 : launch some simulated agents
-        for (int i = 0; i < 10; i++) {
-            launchAgent(new SituatedAgent());
+        for (int i = 0; i < AGENT_NUMBER; i++) {
+            int pos = rand.nextInt(starts.size()-1);
+            int pos2 = rand.nextInt(starts.size()-1);
+            AbstractAgent agent1 = new SituatedAgent(starts.get(pos),targets.get(pos2), rand.nextFloat(),i+1);
+            starts.remove(pos);
+            targets.remove(pos2);
+            launchAgent(agent1);
         }
 
         // 5 : create the scheduler
@@ -42,6 +61,14 @@ public class MySimulationModel extends AbstractAgent {
         Viewer viewer = new Viewer();
         launchAgent(viewer, true);
 	
+    }
+
+    private void fillList(List<Dimension> starts, Dimension dimension) {
+        for (int i=0; i<dimension.getWidth(); i++){
+            for (int j=0; j<dimension.getHeight(); j++) {
+                starts.add(new Dimension(i,j));
+            }
+        }
     }
 
     public static void main(String[] args) {

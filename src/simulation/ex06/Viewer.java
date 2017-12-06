@@ -63,17 +63,24 @@ public class Viewer extends SwingViewer {
      */
     @Override
     protected void render(Graphics g) {
-	g.setColor(Color.RED);
-	for (SituatedAgent a : agentsLocationProbe.getCurrentAgentsList()) {
-	    Dimension location = agentsLocationProbe.getPropertyValue(a);
-	    g.setColor(a.getColor());
-	    g.fillRect(location.width*50, location.height*50, 50, 50);
-	}
-	for (SituatedAgent a : agentsLocationProbe.getCurrentAgentsList()) {
-	    Dimension location = a.getTarget();
-		g.setColor(a.getColor());
-	    g.drawRect(location.width*50, location.height*50, 50, 50);
-	}
+		g.setColor(Color.RED);
+		for (SituatedAgent a : agentsLocationProbe.getCurrentAgentsList()) {
+			Dimension location = a.getTarget();
+			g.setColor(a.getColor());
+			g.drawRect(location.width*50, location.height*50, 50, 50);
+			g.drawString(""+a.getNumero(),location.width*50+25, location.height*50+25);
+		}
+		for (SituatedAgent a : agentsLocationProbe.getCurrentAgentsList()) {
+			Dimension location = agentsLocationProbe.getPropertyValue(a);
+			g.setColor(a.getColor());
+			g.fillRect(location.width*50, location.height*50, 50, 50);
+
+			g.setColor(Color.white);
+			g.drawString(""+a.getNumero(),location.width*50+25, location.height*50+25);
+
+//			g.fillRect(location.width*50, location.height*50, 50, 50);
+		}
+
     }
 
 }

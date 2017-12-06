@@ -33,7 +33,7 @@ public class EnvironmentAgent extends Watcher {
 
     @Override
     protected void activate() {
-	dimension = new Dimension(8, 8);
+	dimension = new Dimension(5, 5);
 	agents = new ArrayList<>();
 	map = new SituatedAgent[(int)dimension.getWidth()][(int)dimension.getHeight()];
 	
@@ -67,7 +67,7 @@ public class EnvironmentAgent extends Watcher {
 		}
     }
 
-    public AbstractAgent getAgentAt(Dimension location, AbstractAgent agentAsker)
+    public synchronized AbstractAgent getAgentAt(Dimension location, AbstractAgent agentAsker)
 	{
 //		for (AbstractAgent agent : agents) {
 //			if(agentAsker != agent && agent instanceof SituatedAgent)
