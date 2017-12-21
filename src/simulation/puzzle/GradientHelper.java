@@ -79,6 +79,7 @@ public class GradientHelper {
 
             if(grad >= 0)
             {
+
                 if (grad == best) {
                     bests.add(loc);
                 } else if (grad < best) {

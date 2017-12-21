@@ -186,7 +186,7 @@ public class SituatedAgent extends Agent {
 
     // CONDITIONS
 
-    private boolean isSatisfied()
+    public boolean isSatisfied()
     {
         return location.equals(target);
     }
@@ -346,6 +346,12 @@ public class SituatedAgent extends Agent {
             bests = GradientHelper.getBestsNear(whiteGradient, bests);
         }
 
+        for (Dimension best : bests) {
+            SituatedAgent agent = environment.getAgentAt(best, this);
+            if(agent == null || !agent.isSatisfied())
+                return best;
+        }
+
         if(bests.size() > 0)
             return bests.get(0);
 
@@ -371,6 +377,12 @@ public class SituatedAgent extends Agent {
 
         info.append("find : ").append(bests.size() > 0 ? bests.get(0) : null).append("\n");
         getLogger().info(info.toString());
+
+        for (Dimension best : bests) {
+            SituatedAgent agent = environment.getAgentAt(best, this);
+            if(agent == null || !agent.isSatisfied())
+                return best;
+        }
 
         if(bests.size() > 0)
             return bests.get(0);

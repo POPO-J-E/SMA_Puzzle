@@ -41,7 +41,6 @@ public class EnvironmentAgent extends Watcher {
 
 	@Override
     protected void activate() {
-		dimension = new Dimension(5, 5);
 		agents = new ArrayList<>();
 		map = new SituatedAgent[(int)dimension.getWidth()][(int)dimension.getHeight()];
 
