@@ -24,9 +24,9 @@ public class MySimulationModel extends AbstractAgent {
     public static final String ENV_ROLE = "environment";
     public static final String SCH_ROLE = "scheduler";
     public static final String VIEWER_ROLE = "viewer";
-    public static final int AGENT_NUMBER = 92;
-    public static final int WIDTH = 10;
-    public static final int HEIGHT = 10;
+    public static final int AGENT_NUMBER = 23;
+    public static final int WIDTH = 5;
+    public static final int HEIGHT = 5;
 
     @Override
     protected void activate() {
